@@ -187,6 +187,7 @@ zproc long_delay_X
     zloop
         ldy #$f8
 
+_short_delay_X_Y:                ; enter here with Y set, and X=1
         zloop
             dey                 ; 2 cycles
         zuntil_eq               ; 3 cycles if looped, $f8*5-1 = 1239 cycles
@@ -224,6 +225,25 @@ zendproc
 
 ; ----------------------------------------------------------------------------
 
+zproc enable_write_and_erase
+    lda PORTB
+    and #(READ_FROM_DISK_MASK | ERASE_ENABLE_MASK)^0xff
+    ; [[fallthrough]]
+zendproc
+
+zproc common_write_and_erase
+    sta PORTB
+    rts
+zendproc
+
+zproc disable_write_and_erase
+    lda PORTB
+    ora #(READ_FROM_DISK_MASK | ERASE_ENABLE_MASK)
+    bne common_write_and_erase
+zendproc
+
+; ----------------------------------------------------------------------------
+
 zproc tobcd
     ldx #0
     zloop
@@ -253,9 +273,9 @@ zendproc
 
 ; ----------------------------------------------------------------------------
 
-zproc read_byte
+zproc read_byte                 ; Returns result from disk in A
     zloop
-        lda ACIA_STATUS         ; wait for STATUS_RDRF_MASK = 0x01, RDR full
+        lda ACIA_STATUS         ; wait for STATUS_RDRF_MASK (0x01), RDR full
         lsr
     zuntil_cs
 
@@ -263,11 +283,24 @@ zproc read_byte
     rts
 zendproc
 
+zproc write_byte                ; Write byte in X to disk
+    zloop
+        lda ACIA_STATUS         ; wait for STATUS_TDRE_MASK (0x02), TDR empty
+        lsr
+        lsr
+    zuntil_cs
+
+    stx ACIA_TDR
+    rts
+zendproc
+
 ; ----------------------------------------------------------------------------
 
-; Track number (binary) in A
+; Common code for reading and writing a track. Exit code in Z(!)
+; The following code initializes the "controller", reads the
+; track marker and verifies the track number.
 
-zproc read_track
+zproc read_write_track_common_intro
     lda curtrk
     jsr tobcd
 
@@ -282,26 +315,38 @@ zproc read_track
 
     jsr read_byte
     cmp #$43
-    bne error_out
+    bne common_error_out
+
     jsr read_byte
     cmp #$57
-    bne error_out
+    bne common_error_out
+
     jsr read_byte
     cmp trkbcd
-    bne error_out
+    bne common_error_out
+
     jsr read_byte
     cmp #$58
-    bne error_out
+
+common_error_out:
+    rts
+zendproc
+
+zproc read_track
+    jsr read_write_track_common_intro
+    bne read_error_out
 
     jsr read_byte
     cmp #$76
-    bne error_out
+    bne read_error_out
+
     jsr read_byte
     cmp #$01
-    bne error_out
+    bne read_error_out
+
     jsr read_byte
     cmp #$08
-    bne error_out
+    bne read_error_out
 
     tax                 ; X=8, read eight pages
 
@@ -317,14 +362,69 @@ zproc read_track
         dex
     zuntil_eq
 
+read_ok_out:
+write_ok_out:
     jsr lift_head_from_disk
     clc
     rts
 
-error_out:
+read_error_out:
+write_error_out:
     jsr lift_head_from_disk
     sec
     rts
+zendproc
+
+zproc write_track
+    jsr read_write_track_common_intro
+    bne write_error_out
+
+    ldx #1
+    ldy #$80
+    jsr _short_delay_X_Y
+
+    jsr enable_write_and_erase
+
+    ldx #1
+    ldy #$80
+    jsr _short_delay_X_Y
+
+    ldx #$76
+    jsr write_byte
+
+    ldx #$01
+    jsr write_byte
+
+    ldx #$08
+    stx save_x              ; 8 pages counter for later
+    jsr write_byte
+
+    ldy #0
+    zloop
+        zloop
+            lda (ptr),y
+            tax
+            jsr write_byte
+            iny
+        zuntil_eq
+
+        inc ptr+1
+        dec save_x
+    zuntil_eq
+
+    ldx #$47
+    jsr write_byte
+
+    ldx #$53
+    jsr write_byte
+
+    zloop                   ; wait until index hole
+        lda PORTA
+    zuntil_pl
+
+    jsr disable_write_and_erase
+
+    jmp write_ok_out
 zendproc
 
 ; vim: filetype=asm sw=4 ts=4 et

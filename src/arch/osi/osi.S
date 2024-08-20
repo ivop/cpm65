@@ -474,6 +474,23 @@ zproc calculate_reqtrk_and_reqsec
     rts
 zendproc
 
+zproc calculate_trkbuf_sector_location
+    lda reqsec
+    lsr
+    sta ptr+1
+    lda #0
+    tay
+    ror
+    clc
+    adc #<trkbuf
+    sta ptr
+    lda ptr+1
+    adc #>trkbuf
+    sta ptr+1
+
+    rts
+zendproc
+
 zproc fill_trkbuf
     jsr calculate_reqtrk_and_reqsec
 
@@ -529,28 +546,20 @@ do_retry:
             rts
         zendif
     zendif
+    clc
     rts
 zendproc
 
 zproc bios_READ
     jsr fill_trkbuf
 
-    ; copy sector from trkbuf to (dma)
+    zif_cs
+        rts
+    zendif
 
-    lda reqsec
-    lsr
-    sta ptr+1
-    lda #0
-    tay
-    ror
-    clc
-    adc #<trkbuf
-    sta ptr
-    lda ptr+1
-    adc #>trkbuf
-    sta ptr+1
+    jsr calculate_trkbuf_sector_location
 
-    zloop
+    zloop                       ; copy sector from trkbuf to (dma)
         lda (ptr),y
         sta (dma),y
         iny
@@ -561,14 +570,23 @@ zproc bios_READ
 zendproc
 
 zproc bios_WRITE
-    jsr fill_trkbuf         ; no-op if current track
+    jsr fill_trkbuf             ; no-op if current track
 
-    ; copy (dma) to trkbuf at offset reqsec*128
+    zif_cs
+        rts
+    zendif
 
-    ; jsr write_track
+    jsr calculate_trkbuf_sector_location
 
-    sec
-    rts
+    zloop                       ; copy sector from (dma) to trkbuf
+        lda (dma),y
+        sta (ptr),y
+        iny
+    zuntil_mi
+
+    jsr write_track             ; returns status in C
+
+    rts                         ; ...and so do we
 zendproc
 
 ; ---------------------------------------------------------------------------
