@@ -198,6 +198,10 @@ no_shift_or_caps:
 
 getkey_done:
     lda tmpval
+    cmp #$5f                ; convert _ to BS key here instead of in matrix
+    zif_eq
+        lda #$7f
+    zendif
     rts
 
 ; ----------------------------------------------------------------------------

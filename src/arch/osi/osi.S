@@ -221,7 +221,11 @@ zendproc
 ; Blocks and waits for the next keypress; returns it in A.
 
 zproc tty_conin
+    jsr show_cursor
     jsr scan_keyboard
+    pha
+    jsr hide_cursor
+    pla
     rts
 zendproc
 
@@ -232,9 +236,29 @@ zproc tty_const
     rts
 zendproc
 
-; ----------------------------------------------------------------------------
-
 ; cursor char: 0xa1 = white square, 0xbb = checkerboard, 0x80 = underline
+
+zproc show_cursor
+    lda #$a1
+    pha
+    bne do_cursor
+zendproc
+
+zproc hide_cursor
+    lda #' '
+    pha
+    ; [[fallthrough]]
+zendproc
+
+zproc do_cursor
+    jsr calculate_cursor_address
+    ldy #0
+    pla
+    sta (ptr),y
+    rts
+zendproc
+
+; ----------------------------------------------------------------------------
 
 ; Output character in A
 
@@ -257,6 +281,24 @@ increase_cury:
         zendif
         rts
     zendif
+    cmp #127
+    zif_eq
+        dec curx
+        zif_mi
+            lda #SCREEN_WIDTH-1
+            sta curx
+
+            dec cury
+            zif_mi
+                lda #0
+                sta cury
+            zendif
+        zendif
+        jsr calculate_cursor_address
+        lda #' '
+        sta (ptr),y
+        rts
+    zendif
 
     pha
     jsr calculate_cursor_address
@@ -275,6 +317,8 @@ increase_cury:
 
     rts
 zendproc
+
+; Set cursor address in ptr
 
 zproc calculate_cursor_address
     ; multiply cury by 64 --> * 256 / 4
@@ -430,11 +474,15 @@ zproc calculate_reqtrk_and_reqsec
     rts
 zendproc
 
-zproc bios_READ
+zproc fill_trkbuf
     jsr calculate_reqtrk_and_reqsec
 
     ; check at which track we are
 
+    lda #3
+    sta retry
+
+do_retry:
     lda curtrk
     cmp reqtrk
     zif_ne
@@ -473,9 +521,19 @@ zproc bios_READ
 
         jsr read_track
         zif_cs
+            lda #$ff            ; force resync on retry
+            sta curtrk
+            dec retry
+            bne do_retry
+            sec
             rts
         zendif
     zendif
+    rts
+zendproc
+
+zproc bios_READ
+    jsr fill_trkbuf
 
     ; copy sector from trkbuf to (dma)
 
@@ -503,6 +561,12 @@ zproc bios_READ
 zendproc
 
 zproc bios_WRITE
+    jsr fill_trkbuf         ; no-op if current track
+
+    ; copy (dma) to trkbuf at offset reqsec*128
+
+    ; jsr write_track
+
     sec
     rts
 zendproc
