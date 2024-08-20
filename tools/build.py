@@ -12,6 +12,7 @@ cprogram(name="mkimd", srcs=["./mkimd.c"])
 cprogram(
     name="fontconvert", srcs=["./fontconvert.c", "./libbdf.c", "./libbdf.h"]
 )
+cprogram(name="img2osi", srcs=["./img2osi.c"])
 
 @Rule
 def unixtocpm(
@@ -175,6 +176,18 @@ def mkimd(self, name, src: Target = None):
         deps=["tools+mkimd"],
         commands=["{deps[0]} -i {ins[0]} -o {outs[0]}"],
         label="MKIMD",
+    )
+
+
+@Rule
+def img2osi(self, name, src: Target = None):
+    normalrule(
+        replaces=self,
+        ins=[src],
+        outs=[name + ".os5"],
+        deps=["tools+img2osi"],
+        commands=["{deps[0]} {ins[0]} {outs[0]}"],
+        label="IMG2OSI",
     )
 
 
