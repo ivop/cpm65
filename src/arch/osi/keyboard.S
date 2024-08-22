@@ -1,4 +1,4 @@
-; Ohio Scientific Instruments floppy routines.
+; Ohio Scientific Instruments polled keyboard routines.
 ; Copyright © 2024 by Ivo van Poorten
 ; This file is licensed under the terms of the 2-clause BSD license. Please
 ; see the COPYING file in the root project directory for the full text.
