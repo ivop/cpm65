@@ -99,6 +99,9 @@ normal_key_pressed:
 
 no_key_pressed:
     sta last_char
+    sta cur_char
+    lda #$80
+    rts
 
 new_char:
     sta cur_char
@@ -106,10 +109,7 @@ new_char:
     lda #2
     sta wait_cntr
 
-    lda #$80                ; non-blocking scan
-    rts
-
-;    bne scan_again          ; branch always (blocking behaviour)
+    bne scan_again          ; branch always
 
 ; ----------------------------------------------------------------------------
 
