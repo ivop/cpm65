@@ -40,114 +40,98 @@ KEYBD = $df00
 scan_keyboard:
 
 scan_again:
-    lda #$01                ; Row mask
+    lda #1                  ; Row mask
     ldy #0                  ; Row counter
     sty modifiers
     dey
 
-0:
-    STA_KEYBD
+    zloop
+        STA_KEYBD
 
-    pha
-    LDA_KEYBD
-    tax                     ; Key pressed in X
-    pla
+        pha
+        LDA_KEYBD
+        tax                     ; Key pressed in X
+        pla
 
-    cpx #0
-    bne key_pressed
+        cpx #0
+        bne key_pressed
 
-next:
-    iny                     ; Increase row counter
-    asl
-    bne 0b
-    beq no_key_pressed      ; branch always
+    next:
+        iny                     ; Increase row counter
+        asl
+    zuntil_eq
 
-; ----------------------------------------------------------------------------
+    sta last_char               ; no key pressed...
+    sta cur_char
+    lda #$80
+    rts
 
 key_pressed:
     lsr                     ; check if row 0 ($01)
-    bcc normal_key_pressed
 
-    rol                     ; correct back to $01
-    stx modifiers           ; save modifiers
+    zif_cs                  ; modifier key(s) or ESC pressed
+        rol                 ; correct back to $01
+        stx modifiers       ; save modifiers
 
-    pha
-    txa
-    and #$20
-    tax
-    pla
-    cpx #$20
-    bne next
+        pha
+        txa
+        and #$20
+        tax
+        pla
+        cpx #$20
+        bne next
 
-    lda #$1b                ; ESC
-    bne lookup_done
+        lda #$1b                ; ESC
+        bne lookup_done
+    zendif
 
-normal_key_pressed:
     lda matrix_index_tab,y
     sta tmpval              ; store "corrected" row*7 
 
     txa                     ; A=column
     ldy #7                  ; convert to index 0-7
-0:
-    dey
-    asl
-    bcc 0b
+    zloop
+        dey
+        asl
+    zuntil_cs
 
-    bcs lookup_key          ; branch always
-
-; ----------------------------------------------------------------------------
-
-no_key_pressed:
-    sta last_char
-    sta cur_char
-    lda #$80
-    rts
-
-new_char:
-    sta cur_char
-
-    lda #2
-    sta wait_cntr
-
-    bne scan_again          ; branch always
-
-; ----------------------------------------------------------------------------
-
-lookup_key:                 ; we _always_ enter lookup_key with C=1 
     tya                     ; A=column
-    adc tmpval              ; add saved row*7 + 1 (carry)
+    adc tmpval              ; add saved row*7 + 1 (carry always set)
     tay
 
     lda keyboard_matrix-1,y ; retrieve ASCII from table (-1 compensates C)
 
 lookup_done:
     cmp cur_char
-    bne new_char
+    zif_ne
+        sta cur_char
+        lda #2
+        sta wait_cntr
+        bne scan_again      ; branch always
+    zendif
 
     dec wait_cntr
     beq debounce_done
 
     ldy #$10
-
-delay_loop:
-    ldx #$40
-0:
-    dex
-    bne 0b
-
-    dey
-    bne delay_loop
+    zloop
+        ldx #$40
+        zloop
+            dex
+        zuntil_eq
+        dey
+    zuntil_eq
 
     beq scan_again
 
 debounce_done:
     ldx #$64                ; long delay on first character
     cmp last_char
-    bne set_wait_cntr
 
-    ldx #$0f                ; shorter repeat rate
+    zif_eq
+        ldx #$0f            ; shorter repeat rate
+    zendif
 
-set_wait_cntr:
     stx wait_cntr
     sta last_char
     sta tmpval
@@ -155,57 +139,50 @@ set_wait_cntr:
 ; Apply key modifiers --------------------------------------------------------
 
     lda modifiers
-    tay                     ; save modifiers in Y
+    tay                         ; save modifiers in Y
 
-    and #7
+    and #7                      ; shift or caps
     tax
-    beq no_shift_or_caps
+    zif_ne                      ; handle shift or caps
+        lda tmpval
+        cmp #$7f                ; RUB, case modifiers have no effect
+        beq getkey_done
 
-    lda tmpval
-    cmp #$5f                ; RUB, case modifiers have no effect
-    beq getkey_done
+        cmp #$61                ; >= 0x61 always toupper()
+        zif_cs
+            eor #$20
+            bne case_adjust_done
+        zendif
 
-    cmp #$61                ; >= 0x61 always toupper() SHIFT+CAPS
-    bcc 0f
+        cpx #1                  ; just CAPS?
+        beq case_adjust_done    ; for < 0x60, CAPS has no effect
 
-    eor #$20
-    bne case_adjust_done
+        cmp #$30                ; special case, add #$10
+        zif_eq
+            clc
+            adc #$10
+            bne case_adjust_done
+        zendif
 
-0:
-    cpx #1                  ; just CAPS?
-    beq case_adjust_done    ; for < 0x60, CAPS has no effect
+        cmp #$21                ; don't adjust space (0x20) and below
+        zif_cs
+            eor #$10            ; all other keys with lshift or rshift
+        zendif
 
-    cmp #$30                ; special case, add #$10
-    bne 0f
+    case_adjust_done:
+        sta tmpval
+    zendif
 
-    clc
-    adc #$10
-    bne case_adjust_done
-
-0:
-    cmp #$21                ; don't adjust space (0x20) and below
-    bcc case_adjust_done
-
-    eor #$10                ; all other keys with lshift or rshift
-
-case_adjust_done:
-    sta tmpval
-
-no_shift_or_caps:
     tya                     ; restore saved modifiers
     and #$40                ; control key?
-    beq getkey_done
-
-    lda tmpval
-    and #$1f
-    rts
+    zif_ne
+        lda tmpval
+        and #$1f
+        rts
+    zendif
 
 getkey_done:
     lda tmpval
-    cmp #$5f                ; convert _ to BS key here instead of in matrix
-    zif_eq
-        lda #$7f
-    zendif
     rts
 
 ; ----------------------------------------------------------------------------
@@ -217,7 +194,7 @@ keyboard_matrix:
     .ascii "iuytrew"
     .byte $0d,$0a       ; removed unused columns
     .ascii "ol."
-    .byte $5F           ; idem
+    .byte $7F           ; idem      (RUB as $7f instead of $5f)
     .ascii "-:098"
     .ascii "7654321"
 
