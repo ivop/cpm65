@@ -51,13 +51,17 @@ drive_number:   .fill 1
 sector_num:     .fill 3
 dma:            .fill 2
 
-SCREEN_WIDTH  = 64
-
-#if OSI500
+#if OSI400
+    SCREEN_WIDTH  = 32
+    SCREEN_HEIGHT = 32
+    SCREEN_PAGES  = 4
+#elif OSI500
+    SCREEN_WIDTH  = 64
     SCREEN_HEIGHT = 32
     SCREEN_PAGES  = 8
     CONTROL = $de00
 #elif OSI600
+    SCREEN_WIDTH  = 64
     SCREEN_HEIGHT = 16
     SCREEN_PAGES  = 4
     CONTROL = $d800
@@ -98,8 +102,10 @@ init:
         dex
     zuntil_eq
 
+#if OSI500 | OSI600
     iny             ; Y=1
     sty CONTROL     ; switch to 64x32 (500 series) or 64x16 (600 series)
+#endif
 
     ; Copy BIOS to lower RAM
 
@@ -349,6 +355,10 @@ zproc calculate_cursor_address
     ror ptr
     lsr
     ror ptr
+#if OSI400
+    lsr                     ; multiply cury by 32 --> * 256 / 8
+    ror ptr
+#endif
     sta ptr+1
 
     ; add curx
@@ -641,7 +651,12 @@ zendproc
 
 ; ---------------------------------------------------------------------------
 
+#if OSI400
+#include "ascii.S"
+#else
 #include "keyboard.S"
+#endif
+
 #include "floppy.S"
 
 ; ---------------------------------------------------------------------------

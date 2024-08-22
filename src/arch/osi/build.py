@@ -12,6 +12,17 @@ from config import (
 )
 
 llvmrawprogram(
+    name="osi400_bios",
+    srcs=["./osi.S"],
+    deps=["include",
+          "src/lib+bioslib",
+          "src/arch/osi/floppy.S",
+          "src/arch/osi/ascii.S"],
+    cflags=["-DOSI400"],
+    linkscript="./osi.ld",
+)
+
+llvmrawprogram(
     name="osi500_bios",
     srcs=["./osi.S"],
     deps=["include",
@@ -31,6 +42,18 @@ llvmrawprogram(
           "src/arch/osi/keyboard.S"],
     cflags=["-DOSI600"],
     linkscript="./osi.ld",
+)
+
+mkcpmfs(
+    name="osi400_rawdiskimage",
+    format="osi5",
+    bootimage=".+osi400_bios",
+    size=128 * 640,
+    items={
+        "0:ccp.sys@sr": "src+ccp",
+        "0:bdos.sys@sr": "src/bdos",
+    }
+    | MINIMAL_APPS
 )
 
 mkcpmfs(
@@ -55,6 +78,11 @@ mkcpmfs(
         "0:bdos.sys@sr": "src/bdos",
     }
     | MINIMAL_APPS
+)
+
+img2osi(
+    name="osi400_diskimage",
+    src=".+osi400_rawdiskimage",
 )
 
 img2osi(

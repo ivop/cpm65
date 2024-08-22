@@ -24,6 +24,7 @@ export(
         "atari800xlhd.atr": "src/arch/atari800+atari800xlhd_diskimage",
         "c64.d64": "src/arch/commodore+c64_diskimage",
         "neo6502.zip": "src/arch/neo6502+diskimage",
+        "osi400.os5": "src/arch/osi+osi400_diskimage",
         "osi500.os5": "src/arch/osi+osi500_diskimage",
         "osi600.os5": "src/arch/osi+osi600_diskimage",
         "pet4032.d64": "src/arch/commodore+pet4032_diskimage",
