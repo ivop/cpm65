@@ -39,6 +39,8 @@ save_y:     .fill 1
 curx:       .fill 1
 cury:       .fill 1
 
+key_pending:.fill 1
+
 trkbcd:     .fill 1
 curtrk:     .fill 1
 reqtrk:     .fill 1
@@ -222,7 +224,18 @@ zendproc
 
 zproc tty_conin
     jsr show_cursor
-    jsr scan_keyboard
+
+    lda key_pending
+
+    ldx #$80                    ; clear pending key
+    stx key_pending
+
+    zloop
+        cmp #$80                ; works for both polled and ASCII keyboards
+        zbreakif_cc             ; < $80, valid key
+        jsr scan_keyboard
+    zendloop
+
     pha
     jsr hide_cursor
     pla
@@ -232,7 +245,14 @@ zendproc
 ; Return 0 if no key is pending, $ff if there is
 
 zproc tty_const
-    lda #0
+    jsr scan_keyboard
+    sta key_pending
+    cmp #$80
+    zif_cc
+        lda #$ff                ; < $80, valid key
+    zelse
+        lda #0
+    zendif
     rts
 zendproc
 

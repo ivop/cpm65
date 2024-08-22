@@ -105,7 +105,11 @@ new_char:
 
     lda #2
     sta wait_cntr
-    bne scan_again          ; branch always
+
+    lda #$80                ; non-blocking scan
+    rts
+
+;    bne scan_again          ; branch always (blocking behaviour)
 
 ; ----------------------------------------------------------------------------
 
