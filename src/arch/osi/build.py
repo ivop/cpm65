@@ -14,7 +14,10 @@ from config import (
 llvmrawprogram(
     name="osi500_bios",
     srcs=["./osi.S"],
-    deps=["include", "src/lib+bioslib"],
+    deps=["include",
+          "src/lib+bioslib",
+          "src/arch/osi/floppy.S",
+          "src/arch/osi/keyboard.S"],
     cflags=["-DOSI500"],
     linkscript="./osi.ld",
 )
@@ -22,7 +25,10 @@ llvmrawprogram(
 llvmrawprogram(
     name="osi600_bios",
     srcs=["./osi.S"],
-    deps=["include", "src/lib+bioslib"],
+    deps=["include",
+          "src/lib+bioslib",
+          "src/arch/osi/floppy.S",
+          "src/arch/osi/keyboard.S"],
     cflags=["-DOSI600"],
     linkscript="./osi.ld",
 )
