@@ -3,11 +3,14 @@
 ; see the COPYING file in the root project directory for the full text.
 
 ; Ohio Scientific Instruments Port, Copyright © 2024 Ivo van Poorten
-
+;
 ; - Minimum of 12 kB RAM (ramtop at $2fff)
 ; - BIOS init loads at $2200. Could be lower, but some older ROMs ignore
 ;       the address in the boot sector and have jmp $2200 hardcoded.
 ; - Floppy drive interface at $c000
+; - 400 series:
+;       + Model 440 video 32x32
+;       + 65V+65F ROM with ASCII keyboard @ $df01
 ; - 500 series:
 ;       + Model 540 video 64x32
 ;       + Model 542 polled keyboard @ $df00
@@ -208,8 +211,7 @@ zproc drvstrat_TTY
 ;    beq tty_const
 ;    dey
 ;    beq tty_conin
-;    dey
-;    beq tty_conout
+;    bne tty_conout
 ; For now, we use the "official" method:
 
     jmpdispatch jmptable_lo, jmptable_hi
