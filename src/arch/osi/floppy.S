@@ -380,13 +380,13 @@ zproc write_track
     bne write_error_out
 
     ldx #1
-    ldy #$80
+    ldy #$10
     jsr _short_delay_X_Y
 
     jsr enable_write_and_erase
 
     ldx #1
-    ldy #$80
+    ldy #$f0
     jsr _short_delay_X_Y
 
     ldx #$76
