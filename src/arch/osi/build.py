@@ -12,7 +12,7 @@ from config import (
 )
 
 llvmrawprogram(
-    name="osi400_bios",
+    name="osi400mf_bios",
     srcs=["./osi.S"],
     deps=["include",
           "src/lib+bioslib",
@@ -23,7 +23,7 @@ llvmrawprogram(
 )
 
 llvmrawprogram(
-    name="osi500_bios",
+    name="osi500mf_bios",
     srcs=["./osi.S"],
     deps=["include",
           "src/lib+bioslib",
@@ -34,7 +34,7 @@ llvmrawprogram(
 )
 
 llvmrawprogram(
-    name="osi600_bios",
+    name="osi600mf_bios",
     srcs=["./osi.S"],
     deps=["include",
           "src/lib+bioslib",
@@ -45,9 +45,9 @@ llvmrawprogram(
 )
 
 mkcpmfs(
-    name="osi400_rawdiskimage",
+    name="osi400mf_rawdiskimage",
     format="osi5",
-    bootimage=".+osi400_bios",
+    bootimage=".+osi400mf_bios",
     size=128 * 640,
     items={
         "0:ccp.sys@sr": "src+ccp",
@@ -57,9 +57,9 @@ mkcpmfs(
 )
 
 mkcpmfs(
-    name="osi500_rawdiskimage",
+    name="osi500mf_rawdiskimage",
     format="osi5",
-    bootimage=".+osi500_bios",
+    bootimage=".+osi500mf_bios",
     size=128 * 640,
     items={
         "0:ccp.sys@sr": "src+ccp",
@@ -69,9 +69,9 @@ mkcpmfs(
 )
 
 mkcpmfs(
-    name="osi600_rawdiskimage",
+    name="osi600mf_rawdiskimage",
     format="osi5",
-    bootimage=".+osi600_bios",
+    bootimage=".+osi600mf_bios",
     size=128 * 640,
     items={
         "0:ccp.sys@sr": "src+ccp",
@@ -80,17 +80,60 @@ mkcpmfs(
     | MINIMAL_APPS
 )
 
-img2osi(
-    name="osi400_diskimage",
-    src=".+osi400_rawdiskimage",
+mkcpmfs(
+    name="osimf-b_rawdiskimage",
+    format="osi5",
+    size=128 * 640,
+    items={
+    }
+    | BIG_APPS
+    | PASCAL_APPS
+)
+
+mkcpmfs(
+    name="osimf-c_rawdiskimage",
+    format="osi5",
+    size=128 * 640,
+    items={
+    }
+    | MINIMAL_APPS_SRCS
+    | BIG_APPS_SRCS
+)
+
+mkcpmfs(
+    name="osimf-d_rawdiskimage",
+    format="osi5",
+    size=128 * 640,
+    items={
+    }
 )
 
 img2osi(
-    name="osi500_diskimage",
-    src=".+osi500_rawdiskimage",
+    name="osi400mf_diskimage",
+    src=".+osi400mf_rawdiskimage",
 )
 
 img2osi(
-    name="osi600_diskimage",
-    src=".+osi600_rawdiskimage",
+    name="osi500mf_diskimage",
+    src=".+osi500mf_rawdiskimage",
+)
+
+img2osi(
+    name="osi600mf_diskimage",
+    src=".+osi600mf_rawdiskimage",
+)
+
+img2osi(
+    name="osimf-b_diskimage",
+    src=".+osimf-b_rawdiskimage",
+)
+
+img2osi(
+    name="osimf-c_diskimage",
+    src=".+osimf-c_rawdiskimage",
+)
+
+img2osi(
+    name="osimf-d_diskimage",
+    src=".+osimf-d_rawdiskimage",
 )
