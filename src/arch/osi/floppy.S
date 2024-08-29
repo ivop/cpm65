@@ -86,8 +86,10 @@ zproc init_pia
     ldx #DATA_DIRECTION_ACCESS
 
     sty CRA         ; select DDRA
-    sty DDRA        ; set all pins to input
+    lda #$40
+    sta DDRA        ; set all pins to input, except bit 6
     stx CRA         ; select ORA
+    sta PORTA       ; select drive 0
 
     sty CRB         ; select DDRB
     dey             ; Y=$ff
@@ -425,6 +427,32 @@ zproc write_track
     jsr disable_write_and_erase
 
     jmp write_ok_out
+zendproc
+
+; Pass drive number in A (0-3)
+
+zproc select_drive_number
+    lda drive_number
+    and #1
+    zif_eq
+        lda #$40
+    zelse
+        lda #0
+    zendif
+    sta PORTA
+
+    lda drive_number
+    and #2
+    zif_eq
+        lda PORTB
+        ora #$20
+    zelse
+        lda PORTB
+        and #$20^$ff
+    zendif
+    sta PORTB
+
+    rts
 zendproc
 
 ; vim: filetype=asm sw=4 ts=4 et

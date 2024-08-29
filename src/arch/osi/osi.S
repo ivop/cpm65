@@ -46,6 +46,7 @@ key_pending:.fill 1
 
 trkbcd:     .fill 1
 curtrk:     .fill 1
+curdrv:     .fill 1
 reqtrk:     .fill 1
 reqsec:     .fill 1
 retry:      .fill 1
@@ -169,8 +170,10 @@ init:
         dey
     zuntil_eq
 
-    lda #$ff
-    sta curtrk
+    ldx #$ff
+    stx curtrk
+    inx
+    stx curdrv
 
     lda #<bdos_filename
     ldx #>bdos_filename
@@ -433,16 +436,39 @@ zendproc
 
 zproc bios_SELDSK
     cmp #0
-    zif_ne
-        sec                 ; invalid drive
+    zif_eq
+        sta drive_number
+        lda #<dph_a
+        ldx #>dph_a
+        clc
+        rts
+    zendif
+    cmp #1
+    zif_eq
+        sta drive_number
+        lda #<dph_b
+        ldx #>dph_b
+        clc
+        rts
+    zendif
+    cmp #2
+    zif_eq
+        sta drive_number
+        lda #<dph_c
+        ldx #>dph_c
+        clc
+        rts
+    zendif
+    cmp #3
+    zif_eq
+        sta drive_number
+        lda #<dph_d
+        ldx #>dph_d
+        clc
         rts
     zendif
 
-    sta drive_number
-
-    lda #<dph
-    ldx #>dph
-    clc
+    sec
     rts
 zendproc
 
@@ -525,6 +551,16 @@ zendproc
 
 zproc fill_trkbuf
     jsr calculate_reqtrk_and_reqsec
+
+    lda drive_number
+    cmp curdrv
+    zif_ne
+        sta curdrv
+        lda #$ff
+        sta curtrk
+    zendif
+
+    jsr select_drive_number
 
     ; check at which track we are
 
@@ -671,11 +707,14 @@ zp_end:  .byte __USERZEROPAGE_END__
 mem_base: .byte __USERTPA_START__@mos16hi
 ; mem_end moved to page zero
 
-; DPH for drive 0 (our only drive)
+; DPH for all drives
 
 ; number of sectors, blocksize, direntries, reserved _sectors_
 
-define_drive dph, 640, 1024, 64, 16
+define_drive dph_a, 640, 1024, 64, 16
+define_drive dph_b, 640, 1024, 64, 16
+define_drive dph_c, 640, 1024, 64, 16
+define_drive dph_d, 640, 1024, 64, 16
 
     .section .noinit, "ax", @nobits
 
