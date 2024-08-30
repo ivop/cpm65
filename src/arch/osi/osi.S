@@ -268,9 +268,10 @@ zproc tty_const
 zendproc
 
 ; cursor char: 0xa1 = white square, 0xbb = checkerboard, 0x80 = underline
+;              0x5f = underscore (works with any font ROM)
 
 zproc show_cursor
-    lda #$a1
+    lda #$5f
     pha
     bne do_cursor
 zendproc
