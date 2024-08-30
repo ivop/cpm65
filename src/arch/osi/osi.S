@@ -515,6 +515,13 @@ zendproc
 ;       e) Works out-of-the-box for every CPU speed (0.98Mhz-2MHz)
 ;       f) Code is small and easy to understand (BIOS+init needs to be <=2kB)
 
+; ---------------------------------------------------------------------------
+
+#ifndef FLOPPY8
+
+; 5.25" Mini-Floppy
+; reqtrk = sector_num / 16, remainder in reqsec
+
 zproc calculate_reqtrk_and_reqsec
     lda sector_num
     sta reqtrk
@@ -533,8 +540,51 @@ zproc calculate_reqtrk_and_reqsec
     rts
 zendproc
 
-zproc calculate_trkbuf_sector_location
+#else
+
+; 8" Floppy
+; reqtrk = sector_num / 24, remainder in reqsec
+
+zproc calculate_reqtrk_and_reqsec
+    lda sector_num
+    sta reqtrk
+    lda sector_num+1
+    sta reqtrk+1
+
+    lda #0              ; initialize remainder to zero
+    sta reqsec
+    sta ptr1            ; temporary msb of remainder
+    ldx #15
+
+divloop:
+    asl reqtrk           ; shift hi bit of reqtrk into remainder
+    rol reqtrk+1         ; (vacating the lo bit for the quotient)
+    rol reqsec
+    rol ptr1
+
     lda reqsec
+    sec                 ; trial subtraction
+    sbc #24
+    tay
+    lda ptr1
+    sbc #0
+    bcc failed          ; did subtraction succeed?
+
+    sta ptr1            ; if yes, save it
+    sty reqsec
+    inc reqtrk          ; and record a 1 in the quotient
+
+failed:
+    dex
+    bpl divloop
+
+    rts
+zendproc
+
+#endif
+
+zproc calculate_trkbuf_sector_location
+    lda reqsec      ; * 128 --> * 256 / 2
     lsr
     sta ptr+1
     lda #0
