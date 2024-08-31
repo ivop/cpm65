@@ -146,6 +146,8 @@ int main(int argc, char **argv) {
 
             for (int j=0; j<2048; j++)
                 put_byte_8E1(fgetc(inp));
+            if (npages > 8)
+                fseek(inp, (npages-8) * 256, SEEK_CUR);
 
         } else {                            // track 1-39
             for (int j=0; j<delay1*8; j++)
