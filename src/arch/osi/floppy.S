@@ -385,6 +385,16 @@ zproc write_track
     ldy #$10
     jsr _short_delay_X_Y
 
+#ifdef FLOPPY8
+    lda curtrk
+    cmp #44
+    zif_cs
+        lda PORTB
+        and #LOW_CURRENT_MASK^0xff
+        sta PORTB
+    zendif
+#endif
+
     jsr enable_write_and_erase
 
     ldx #1
@@ -425,6 +435,12 @@ zproc write_track
     zuntil_pl
 
     jsr disable_write_and_erase
+
+#ifdef FLOPPY8
+    lda PORTB
+    ora #LOW_CURRENT_MASK
+    sta PORTB
+#endif
 
     jmp write_ok_out
 zendproc
