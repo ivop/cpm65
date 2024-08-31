@@ -107,7 +107,10 @@ mkcpmfs(
     format="osi5",
     size=128 * 640,
     items={
+        "0:tty540b.com": "src/arch/osi/utils+tty540b",
     }
+    | SCREEN_APPS
+    | SCREEN_APPS_SRCS
 )
 
 img2os5(
