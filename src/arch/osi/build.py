@@ -140,6 +140,7 @@ img2os5(
     src=".+osimf-d_rawdiskimage",
 )
 
+# 400, 500, 600, Floppy (8")
 
 llvmrawprogram(
     name="osi400f_bios",
@@ -152,7 +153,27 @@ llvmrawprogram(
     linkscript="./osi.ld",
 )
 
-# 400, 500, 600, Floppy (8")
+llvmrawprogram(
+    name="osi500f_bios",
+    srcs=["./osi.S"],
+    deps=["include",
+          "src/lib+bioslib",
+          "src/arch/osi/floppy.S",
+          "src/arch/osi/ascii.S"],
+    cflags=["-DOSI500", "-DFLOPPY8"],
+    linkscript="./osi.ld",
+)
+
+llvmrawprogram(
+    name="osi600f_bios",
+    srcs=["./osi.S"],
+    deps=["include",
+          "src/lib+bioslib",
+          "src/arch/osi/floppy.S",
+          "src/arch/osi/ascii.S"],
+    cflags=["-DOSI600", "-DFLOPPY8"],
+    linkscript="./osi.ld",
+)
 
 mkcpmfs(
     name="osi400f_rawdiskimage",
@@ -164,6 +185,50 @@ mkcpmfs(
         "0:bdos.sys@sr": "src/bdos",
     }
     | MINIMAL_APPS
+    | BIG_APPS
+    | PASCAL_APPS
+    | MINIMAL_APPS_SRCS
+    | BIG_APPS_SRCS
+)
+
+mkcpmfs(
+    name="osi500f_rawdiskimage",
+    format="osi8",
+    bootimage=".+osi500f_bios",
+    size=128 * 1848,
+    items={
+        "0:ccp.sys@sr": "src+ccp",
+        "0:bdos.sys@sr": "src/bdos",
+    }
+    | MINIMAL_APPS
+    | BIG_APPS
+    | PASCAL_APPS
+    | MINIMAL_APPS_SRCS
+    | BIG_APPS_SRCS
+)
+
+mkcpmfs(
+    name="osi600f_rawdiskimage",
+    format="osi8",
+    bootimage=".+osi600f_bios",
+    size=128 * 1848,
+    items={
+        "0:ccp.sys@sr": "src+ccp",
+        "0:bdos.sys@sr": "src/bdos",
+    }
+    | MINIMAL_APPS
+    | BIG_APPS
+    | PASCAL_APPS
+    | MINIMAL_APPS_SRCS
+    | BIG_APPS_SRCS
+)
+
+mkcpmfs(
+    name="osif-b_rawdiskimage",
+    format="osi8",
+    size=128 * 1848,
+    items={
+    }
 )
 
 img2os8(
@@ -171,3 +236,17 @@ img2os8(
     src=".+osi400f_rawdiskimage",
 )
 
+img2os8(
+    name="osi500f_diskimage",
+    src=".+osi500f_rawdiskimage",
+)
+
+img2os8(
+    name="osi600f_diskimage",
+    src=".+osi600f_rawdiskimage",
+)
+
+img2os8(
+    name="osif-b_diskimage",
+    src=".+osif-b_rawdiskimage",
+)
