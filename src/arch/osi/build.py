@@ -1,6 +1,5 @@
-from build.ab import normalrule
 from tools.build import mkcpmfs, img2os5, img2os8
-from build.llvm import llvmrawprogram, llvmclibrary
+from build.llvm import llvmrawprogram
 from config import (
     MINIMAL_APPS,
     MINIMAL_APPS_SRCS,

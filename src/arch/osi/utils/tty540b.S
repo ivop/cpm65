@@ -20,8 +20,8 @@ drv_zp_begin:
 ptr:            .fill 2
 ptr1:           .fill 2
 
-cursorx:        .fill 1
-cursory:        .fill 1
+curx:        .fill 1
+cury:        .fill 1
 
 drv_zp_end:
 
@@ -33,11 +33,13 @@ CONTROL = $de00
 ENABLE_64X32 = 0x01
 ENABLE_COLOR = 0x04
 
-NORMAL  = $0e
-INVERSE = $0f
+NORMAL    = $0e
+INVERSE   = $0f
+CURSORXOR = (NORMAL ^ INVERSE)
 
 SCREENMEM = $d000
 COLORMEM  = $e000
+COLORXOR  = $03         ; $d0 ^ $03 = $e0 and vice versa
 
 ; -------------------------------------------------------------------------
 
@@ -216,6 +218,9 @@ clearscrn:
     dey
     bne clearscrn
 
+    sty curx        ; home cursor
+    sty cury
+
     rts
 zendproc
 
@@ -230,19 +235,21 @@ zproc screen540b_setcursor
     zif_cs
         lda #SCREEN_WIDTH-1
     zendif
-    sta cursorx
+    sta curx
 
     txa
     cmp #SCREEN_HEIGHT
     zif_cs
         lda #SCREEN_HEIGHT-1
     zendif
-    sta cursory
+    sta cury
 
     rts
 zendproc
 
 zproc screen540b_getcursor
+    lda curx
+    ldx cury
     rts
 zendproc
 
@@ -305,7 +312,38 @@ zendproc
 
 ; -------------------------------------------------------------------------
 
+; Return cursor address in ptr
+
+zproc calculate_cursor_address
+    lda #0
+    sta ptr
+    lda cury        ; * 64 ---> * 256 / 4
+    lsr
+    ror ptr
+    lsr
+    ror ptr
+    adc #>SCREENMEM     ; only MSB because SCREENMEM is page aligned
+    sta ptr+1
+
+    lda ptr
+    adc curx            ; C is clear because of ror and adc cannot overflow
+    sta ptr
+    zif_cs
+        inc ptr+1
+    zendif
+
+    rts
+zendproc
+
 zproc toggle_cursor
+    jsr calculate_cursor_address
+    lda ptr+1
+    eor #COLORXOR
+    sta ptr+1
+    ldy #0
+    lda (ptr),y
+    eor #CURSORXOR
+    sta (ptr),y
     rts
 zendproc
 
