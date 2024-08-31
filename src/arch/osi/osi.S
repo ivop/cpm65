@@ -379,22 +379,17 @@ zproc calculate_cursor_address
     lsr                     ; multiply cury by 32 --> * 256 / 8
     ror ptr
 #endif
+    adc #>SCREENMEM         ; only add MSB because SCREENMEM is page aligned
     sta ptr+1
 
     ; add curx
     lda ptr
-;    clc                    ; C = 0 because of ror
+;    clc                    ; C = 0 because of ror and previous adc
     adc curx
     sta ptr
     zif_cs
         inc ptr+1
     zendif
-
-    ; add screen base, only add MSB because SCREENMEM is page aligned
-    clc
-    lda ptr+1
-    adc #>SCREENMEM
-    sta ptr+1
 
     rts
 zendproc
