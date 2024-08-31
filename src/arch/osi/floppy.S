@@ -306,9 +306,9 @@ zproc read_write_track_common_intro
     lda curtrk
     jsr tobcd
 
-    lda #<trkbuf
+    lda #0
     sta ptr
-    lda #>trkbuf
+    lda ptrkbuf
     sta ptr+1
 
     jsr put_head_on_disk
@@ -347,11 +347,7 @@ zproc read_track
     bne read_error_out
 
     jsr read_byte
-#ifndef FLOPPY8
-    cmp #8
-#else
-    cmp #12
-#endif
+    cmp #PAGES_PER_TRACK
     bne read_error_out
 
     tax                 ; X=8 or X=12, read X pages
@@ -401,11 +397,7 @@ zproc write_track
     ldx #$01
     jsr write_byte
 
-#ifndef FLOPPY8
-    ldx #8
-#else
-    ldx #12
-#endif
+    ldx #PAGES_PER_TRACK
     stx save_x              ; X pages counter for later
     jsr write_byte
 

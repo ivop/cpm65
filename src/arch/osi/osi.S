@@ -4,7 +4,7 @@
 
 ; Ohio Scientific Instruments Port, Copyright © 2024 Ivo van Poorten
 ;
-; - Minimum of 12 kB RAM (ramtop at $2fff)
+; - Minimum of 16 kB RAM (ramtop at $3fff)
 ; - BIOS init loads at $2200. Could be lower, but some older ROMs ignore
 ;       the address in the boot sector and have jmp $2200 hardcoded.
 ; - Floppy drive interface at $c000
@@ -35,7 +35,7 @@ ptr:        .fill 2
 ptr1:       .fill 2
 
 mem_end:    .fill 1
-
+ptrkbuf:    .fill 1     ; MSB only, LSB=0
 save_x:     .fill 1
 save_y:     .fill 1
 
@@ -69,6 +69,12 @@ dma:            .fill 2
     SCREEN_HEIGHT = 16
     SCREEN_PAGES  = 4
     CONTROL = $d800
+#endif
+
+#ifdef FLOPPY8
+PAGES_PER_TRACK = 12
+#else
+PAGES_PER_TRACK = 8
 #endif
 
 SCREENMEM = $d000
@@ -137,13 +143,13 @@ init:
         cmp #>bios_end_addr
     zuntil_eq
 
-    ; Determine memory size. $0000-$2fff is assumed RAM (the 12kB minimum).
+    ; Determine memory size. $0000-$3fff is assumed RAM (the 16kB minimum).
     ; Systems without BASIC can have RAM at $a000-$bfff. Floppy controller
     ; starts at $c000
 
     ; ptr is still zero
 
-    lda #$2f
+    lda #$3f
     sta ptr+1
 
     zloop
@@ -155,6 +161,9 @@ init:
         cmp (ptr),y
     zuntil_ne
 
+    sec
+    sbc #PAGES_PER_TRACK
+    sta ptrkbuf                     ; put track buffer at ramtop
     sta mem_end
 
     jsr init_pia
@@ -595,10 +604,10 @@ zproc calculate_trkbuf_sector_location      ; and set Y to zero!
     tay
     ror
     clc
-    adc #<trkbuf
+    adc #0
     sta ptr
     lda ptr+1
-    adc #>trkbuf
+    adc ptrkbuf
     sta ptr+1
 
     rts
@@ -781,14 +790,6 @@ define_drive dph_b, 1848, 1024, 64, 24
     .global directory_buffer
 
 directory_buffer:   .fill 128
-
-#ifndef FLOPPY8
-trkbuf:     .fill 2048
-#else
-trkbuf:     .fill 3072
-#endif
-
-check_end = .
 
 ; ---------------------------------------------------------------------------
 
