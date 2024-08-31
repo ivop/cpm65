@@ -534,6 +534,9 @@ zendproc
 
 #ifndef FLOPPY8
 
+; If we run out of memory again, calculate_reqtrk_and_reqsec can be inlined
+; to save another four bytes. There's only one caller.
+
 ; 5.25" Mini-Floppy
 ; reqtrk = sector_num / 16, remainder in reqsec
 
@@ -605,8 +608,6 @@ zproc calculate_trkbuf_sector_location      ; and set Y to zero!
     lda #0
     tay
     ror
-    clc
-    adc #0
     sta ptr
     lda ptr+1
     adc ptrkbuf
