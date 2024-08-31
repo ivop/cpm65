@@ -218,25 +218,26 @@ defdriver TTY, DRVID_TTY, drvstrat_TTY, 0
 ; Y=TTY opcode.
 zproc drvstrat_TTY
 
-; If we need more RAM, we can use this smaller dispatcher
-;    cpy #0
-;    beq tty_const
-;    dey
-;    beq tty_conin
-;    bne tty_conout
-; For now, we use the "official" method:
+    cpy #0
+    beq tty_const
+    dey
+    beq tty_conin
+    bne tty_conout
 
-    jmpdispatch jmptable_lo, jmptable_hi
-
-jmptable_lo:
-    jmptablo tty_const
-    jmptablo tty_conin
-    jmptablo tty_conout
-jmptable_hi:
-    jmptabhi tty_const
-    jmptabhi tty_conin
-    jmptabhi tty_conout
-zendproc
+; Memory is getting tight. The above dispatcher is less code than the
+; official jmpdispatcher.
+;
+;    jmpdispatch jmptable_lo, jmptable_hi
+;
+;jmptable_lo:
+;    jmptablo tty_const
+;    jmptablo tty_conin
+;    jmptablo tty_conout
+;jmptable_hi:
+;    jmptabhi tty_const
+;    jmptabhi tty_conin
+;    jmptabhi tty_conout
+;zendproc
 
 ; --- TTY DRIVER ------------------------------------------------------------
 
@@ -526,7 +527,8 @@ zendproc
 ;       d) Disks can be copied with standard OS65D disk copier, even though
 ;          there is no OS65D directory.
 ;       e) Works out-of-the-box for every CPU speed (0.98Mhz-2MHz)
-;       f) Code is small and easy to understand (BIOS+init needs to be <=2kB)
+;       f) Code is small and easy to understand (BIOS+init needs to be less
+;          than 2kB and memory is scarce).
 
 ; ---------------------------------------------------------------------------
 
