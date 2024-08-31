@@ -435,7 +435,7 @@ zproc select_drive_number
     lda drive_number
     and #1
     zif_eq
-        lda #$40
+        lda #DRIVE0_SELECT_MASK
     zelse
         lda #0
     zendif
@@ -445,10 +445,10 @@ zproc select_drive_number
     and #2
     zif_eq
         lda PORTB
-        ora #$20
+        ora #DRIVE_01_23_MASK
     zelse
         lda PORTB
-        and #$20^$ff
+        and #DRIVE_01_23_MASK^$ff
     zendif
     sta PORTB
 
