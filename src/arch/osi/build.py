@@ -1,5 +1,5 @@
 from build.ab import normalrule
-from tools.build import mkcpmfs, img2osi
+from tools.build import mkcpmfs, img2os5, img2os8
 from build.llvm import llvmrawprogram, llvmclibrary
 from config import (
     MINIMAL_APPS,
@@ -10,6 +10,8 @@ from config import (
     SCREEN_APPS_SRCS,
     PASCAL_APPS,
 )
+
+# 400, 500, 600 Mini-Floppy (5.25")
 
 llvmrawprogram(
     name="osi400mf_bios",
@@ -108,32 +110,64 @@ mkcpmfs(
     }
 )
 
-img2osi(
+img2os5(
     name="osi400mf_diskimage",
     src=".+osi400mf_rawdiskimage",
 )
 
-img2osi(
+img2os5(
     name="osi500mf_diskimage",
     src=".+osi500mf_rawdiskimage",
 )
 
-img2osi(
+img2os5(
     name="osi600mf_diskimage",
     src=".+osi600mf_rawdiskimage",
 )
 
-img2osi(
+img2os5(
     name="osimf-b_diskimage",
     src=".+osimf-b_rawdiskimage",
 )
 
-img2osi(
+img2os5(
     name="osimf-c_diskimage",
     src=".+osimf-c_rawdiskimage",
 )
 
-img2osi(
+img2os5(
     name="osimf-d_diskimage",
     src=".+osimf-d_rawdiskimage",
 )
+
+
+llvmrawprogram(
+    name="osi400f_bios",
+    srcs=["./osi.S"],
+    deps=["include",
+          "src/lib+bioslib",
+          "src/arch/osi/floppy.S",
+          "src/arch/osi/ascii.S"],
+    cflags=["-DOSI400", "-DFLOPPY8"],
+    linkscript="./osi.ld",
+)
+
+# 400, 500, 600, Floppy (8")
+
+mkcpmfs(
+    name="osi400f_rawdiskimage",
+    format="osi8",
+    bootimage=".+osi400f_bios",
+    size=128 * 1848,
+    items={
+        "0:ccp.sys@sr": "src+ccp",
+        "0:bdos.sys@sr": "src/bdos",
+    }
+    | MINIMAL_APPS
+)
+
+img2os8(
+    name="osi400f_diskimage",
+    src=".+osi400f_rawdiskimage",
+)
+

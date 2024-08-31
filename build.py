@@ -32,6 +32,7 @@ export(
         "osimf-b.os5": "src/arch/osi+osimf-b_diskimage",
         "osimf-c.os5": "src/arch/osi+osimf-c_diskimage",
         "osimf-d.os5": "src/arch/osi+osimf-d_diskimage",
+        "osi400f.os8": "src/arch/osi+osi400f_diskimage",
         "pet4032.d64": "src/arch/commodore+pet4032_diskimage",
         "pet8032.d64": "src/arch/commodore+pet8032_diskimage",
         "pet8096.d64": "src/arch/commodore+pet8096_diskimage",

@@ -347,10 +347,14 @@ zproc read_track
     bne read_error_out
 
     jsr read_byte
-    cmp #$08
+#ifndef FLOPPY8
+    cmp #8
+#else
+    cmp #12
+#endif
     bne read_error_out
 
-    tax                 ; X=8, read eight pages
+    tax                 ; X=8 or X=12, read X pages
 
     ldy #0
     zloop
@@ -397,8 +401,12 @@ zproc write_track
     ldx #$01
     jsr write_byte
 
-    ldx #$08
-    stx save_x              ; 8 pages counter for later
+#ifndef FLOPPY8
+    ldx #8
+#else
+    ldx #12
+#endif
+    stx save_x              ; X pages counter for later
     jsr write_byte
 
     ldy #0

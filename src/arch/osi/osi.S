@@ -452,6 +452,7 @@ zproc bios_SELDSK
         clc
         rts
     zendif
+#ifndef FLOPPY8
     cmp #2
     zif_eq
         sta drive_number
@@ -468,6 +469,7 @@ zproc bios_SELDSK
         clc
         rts
     zendif
+#endif
 
     sec
     rts
@@ -502,6 +504,8 @@ zendproc
 ;
 ; track 0       Boot ROM boot sector, 2048 bytes
 ; track 1-39    OS65D compatible track marker and 1 sector of 8 pages (2048B)
+; or
+; track 1-76    OS65D compatible track marker and 1 sector of 12 pages (3072B)
 ;
 ; Tracks are always read or written to/from trkbuf in one go.
 ; This means that:
@@ -549,7 +553,7 @@ zproc calculate_reqtrk_and_reqsec
     lda sector_num
     sta reqtrk
     lda sector_num+1
-    sta reqtrk+1
+    sta ptr1+1          ; temporary msb of reqtrk
 
     lda #0              ; initialize remainder to zero
     sta reqsec
@@ -558,7 +562,7 @@ zproc calculate_reqtrk_and_reqsec
 
 divloop:
     asl reqtrk           ; shift hi bit of reqtrk into remainder
-    rol reqtrk+1         ; (vacating the lo bit for the quotient)
+    rol ptr1+1           ; (vacating the lo bit for the quotient)
     rol reqsec
     rol ptr1
 
@@ -762,10 +766,15 @@ mem_base: .byte __USERTPA_START__@mos16hi
 
 ; number of sectors, blocksize, direntries, reserved _sectors_
 
+#ifndef FLOPPY8
 define_drive dph_a, 640, 1024, 64, 16
 define_drive dph_b, 640, 1024, 64, 16
 define_drive dph_c, 640, 1024, 64, 16
 define_drive dph_d, 640, 1024, 64, 16
+#else
+define_drive dph_a, 1848, 1024, 64, 24
+define_drive dph_b, 1848, 1024, 64, 24
+#endif
 
     .section .noinit, "ax", @nobits
 
@@ -773,7 +782,13 @@ define_drive dph_d, 640, 1024, 64, 16
 
 directory_buffer:   .fill 128
 
+#ifndef FLOPPY8
 trkbuf:     .fill 2048
+#else
+trkbuf:     .fill 3072
+#endif
+
+check_end = .
 
 ; ---------------------------------------------------------------------------
 
