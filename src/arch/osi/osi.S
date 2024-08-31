@@ -244,18 +244,22 @@ zproc drvstrat_TTY
 ; Blocks and waits for the next keypress; returns it in A.
 
 zproc tty_conin
-    jsr show_cursor
-
     lda key_pending
 
     ldx #$80                    ; clear pending key
     stx key_pending
 
+    cmp #$80
+    zif_cc
+        rts
+    zendif
+
+    jsr show_cursor
+
     zloop
-        cmp #$80                ; works for both polled and ASCII keyboards
-        zbreakif_cc             ; < $80, valid key
         jsr scan_keyboard
-    zendloop
+        cmp #$80                ; works for both polled and ASCII keyboards
+    zuntil_cc                   ; < $80, valid key
 
     pha
     jsr hide_cursor
