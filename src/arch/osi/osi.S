@@ -587,7 +587,7 @@ zendproc
 
 #endif
 
-zproc calculate_trkbuf_sector_location
+zproc calculate_trkbuf_sector_location      ; and set Y to zero!
     lda reqsec      ; * 128 --> * 256 / 2
     lsr
     sta ptr+1
@@ -680,7 +680,7 @@ zproc bios_READ
         rts
     zendif
 
-    jsr calculate_trkbuf_sector_location
+    jsr calculate_trkbuf_sector_location    ; set Y to zero
 
     zloop                       ; copy sector from trkbuf to (dma)
         lda (ptr),y
