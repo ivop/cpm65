@@ -230,6 +230,18 @@ clearscrn:
 zendproc
 
 zproc screen540b_cleartoeol
+    jsr calculate_cursor_address
+
+    ldy curx
+    zloop
+        lda #' '
+        sta (ptr),y
+        lda #NORMAL
+        sta (ptr1),y
+        iny
+        cpy #SCREEN_WIDTH
+    zuntil_eq
+
     rts
 zendproc
 
@@ -268,6 +280,10 @@ stylebg=.+1
     lda #NORMAL
     sta (ptr1),y
 
+    cpy #SCREEN_WIDTH-1
+    zif_ne
+        inc curx
+    zendif
     rts
 zendproc
 
@@ -283,6 +299,28 @@ zproc screen540b_setstyle
 zendproc
 
 zproc screen540b_putstring
+    sta 1f+1
+    stx 1f+2
+
+    lda curx
+    pha
+
+    ldx #0
+    zloop
+    1:
+        lda $1234,x
+        zbreakif_eq
+
+        jsr screen540b_putchar
+
+        lda curx
+        cmp #SCREEN_WIDTH
+        zbreakif_eq
+        inx
+    zendloop
+
+    pla
+    sta curx
     rts
 zendproc
 
@@ -469,15 +507,27 @@ do_lf:
                 jsr screen540b_scrolldown
             zendif
         zendif
+        jsr calculate_cursor_address
+        ldy curx
         lda #' '
-        jmp screen540b_putchar
+        sta (ptr),y
+        lda #NORMAL
+        sta (ptr1),y
+        rts
+    zendif
+    cmp #$20
+    zif_cc
+        rts
     zendif
 
+    ldx curx
+    stx ptr3                    ; temporary save location
+
+    and #$7f
     jsr screen540b_putchar
 
-    inc curx
-    lda curx
-    cmp #SCREEN_WIDTH
+    lda ptr3                    ; retrieve previous x position
+    cmp #SCREEN_WIDTH-1
     zif_eq
         lda #0
         sta curx
