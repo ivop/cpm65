@@ -17,11 +17,13 @@ ZEROPAGE
 
 drv_zp_begin:
 
-ptr:            .fill 2
-ptr1:           .fill 2
+ptr:        .fill 2
+ptr1:       .fill 2
+ptr2:       .fill 2
+ptr3:       .fill 2
 
-curx:        .fill 1
-cury:        .fill 1
+curx:       .fill 1
+cury:       .fill 1
 
 drv_zp_end:
 
@@ -37,9 +39,12 @@ NORMAL    = $0e
 INVERSE   = $0f
 CURSORXOR = (NORMAL ^ INVERSE)
 
-SCREENMEM = $d000
-COLORMEM  = $e000
-COLORXOR  = $03         ; $d0 ^ $03 = $e0 and vice versa
+SCREENMEM   = $d000
+SECLASTLINE = $d780
+LASTLINE    = $d7c0
+
+COLORMEM    = $e000
+COLORXOR    = ((SCREENMEM ^ COLORMEM) / 256)
 
 ; -------------------------------------------------------------------------
 
@@ -254,11 +259,26 @@ zproc screen540b_getcursor
 zendproc
 
 zproc screen540b_putchar
+    pha
+    jsr calculate_cursor_address
+    pla
+    ldy curx
+    sta (ptr),y
+stylebg=.+1
+    lda #NORMAL
+    sta (ptr1),y
+
     rts
 zendproc
 
 zproc screen540b_setstyle
-    sta style
+    cmp #STYLE_REVERSE
+    zif_eq
+        lda #INVERSE
+    zelse
+        lda #NORMAL
+    zendif
+    sta stylebg
     rts
 zendproc
 
@@ -266,19 +286,127 @@ zproc screen540b_putstring
     rts
 zendproc
 
+; We don't have timers on the OSI, just block for now
 zproc screen540b_getchar
-    rts
+    jmp tty540b_conin
 zendproc
 
 zproc screen540b_scrollup
+    lda #0
+    sta ptr
+    sta ptr2
+    lda #SCREEN_WIDTH
+    sta ptr1
+    sta ptr3
+    lda #>SCREENMEM
+    sta ptr+1
+    sta ptr1+1
+    eor #COLORXOR
+    sta ptr2+1
+    sta ptr3+1
+
+    ldx #SCREEN_HEIGHT-1
+    zloop
+        ldy #SCREEN_WIDTH-1
+        zloop
+            lda (ptr1),y
+            sta (ptr),y
+            lda (ptr3),y
+            sta (ptr2),y
+            dey
+        zuntil_mi
+
+        lda ptr1
+        sta ptr
+        sta ptr2
+        lda ptr1+1
+        sta ptr+1
+        eor #COLORXOR
+        sta ptr2+1
+
+        lda ptr1
+        clc
+        adc #SCREEN_WIDTH
+        sta ptr1
+        sta ptr3
+        zif_cs
+            inc ptr1+1
+            inc ptr3+1
+        zendif
+
+        dex
+    zuntil_eq
+
+common_clear:
+    ldy #SCREEN_WIDTH-1
+    zloop
+        lda #' '
+        sta (ptr),y
+        lda #NORMAL
+        sta (ptr2),y
+        dey
+    zuntil_mi
+
     rts
 zendproc
 
 zproc screen540b_scrolldown
-    rts
+    lda #<SECLASTLINE
+    sta ptr1
+    sta ptr3
+    lda #<LASTLINE
+    sta ptr
+    sta ptr2
+    lda #>LASTLINE
+    sta ptr1+1
+    sta ptr+1
+    eor #COLORXOR
+    sta ptr3+1
+    sta ptr2+1
+
+    ldx #SCREEN_HEIGHT-1
+    zloop
+        ldy #SCREEN_WIDTH-1
+        zloop
+            lda (ptr1),y
+            sta (ptr),y
+            lda (ptr3),y
+            sta (ptr2),y
+            dey
+        zuntil_mi
+
+        lda ptr1
+        sta ptr
+        sta ptr2
+        lda ptr1+1
+        sta ptr+1
+        eor #COLORXOR
+        sta ptr2+1
+
+        lda ptr1
+        sec
+        sbc #SCREEN_WIDTH
+        sta ptr1
+        sta ptr3
+        zif_cc
+            dec ptr1+1
+            dec ptr3+1
+        zendif
+
+        dex
+    zuntil_eq
+
+    jmp common_clear
 zendproc
 
 zproc screen540b_showcursor
+    cmp #0
+    zif_eq
+        lda #0
+    zelse
+        lda #CURSORXOR
+    zendif
+    sta cursor_xor
     rts
 zendproc
 
@@ -296,28 +424,77 @@ zendproc
 ; a character immediately without drawing and erasing the old cursor(!)
 
 zproc tty540b_conin
+    jsr toggle_cursor
+
     zloop
         ldy #BIOS_CONST
         jsr next_tty
         cmp #$ff
     zuntil_eq
 
+    jsr toggle_cursor
     ldy #BIOS_CONIN
     jmp next_tty
 zendproc
 
 zproc tty540b_conout
-    jmp next_tty
+    cmp #13
+    zif_eq
+        lda #0
+        sta curx
+        rts
+    zendif
+    cmp #10
+    zif_eq
+do_lf:
+        inc cury
+        lda cury
+        cmp #SCREEN_HEIGHT
+        zif_eq
+            dec cury
+            jmp screen540b_scrollup
+        zendif
+        rts
+    zendif
+    cmp #127
+    zif_eq
+        dec curx
+        zif_mi
+            lda #SCREEN_WIDTH-1
+            sta curx
+
+            dec cury
+            zif_mi
+                inc cury
+                jsr screen540b_scrolldown
+            zendif
+        zendif
+        lda #' '
+        jmp screen540b_putchar
+    zendif
+
+    jsr screen540b_putchar
+
+    inc curx
+    lda curx
+    cmp #SCREEN_WIDTH
+    zif_eq
+        lda #0
+        sta curx
+        beq do_lf
+    zendif
+    rts
 zendproc
 
 ; -------------------------------------------------------------------------
 
-; Return cursor address in ptr
+; Return ptr to line where cursor is in SCREENMEM, use curx as index later
+; Return ptr1 to line where cursor is in COLORMEM
 
 zproc calculate_cursor_address
     lda #0
     sta ptr
-    lda cury        ; * 64 ---> * 256 / 4
+    lda cury            ; * 64 ---> * 256 / 4
     lsr
     ror ptr
     lsr
@@ -325,25 +502,23 @@ zproc calculate_cursor_address
     adc #>SCREENMEM     ; only MSB because SCREENMEM is page aligned
     sta ptr+1
 
+    eor #COLORXOR
+    sta ptr1+1
     lda ptr
-    adc curx            ; C is clear because of ror and adc cannot overflow
-    sta ptr
-    zif_cs
-        inc ptr+1
-    zendif
+    sta ptr1
 
     rts
 zendproc
 
 zproc toggle_cursor
     jsr calculate_cursor_address
-    lda ptr+1
-    eor #COLORXOR
-    sta ptr+1
-    ldy #0
-    lda (ptr),y
+
+    ldy curx
+    lda (ptr1),y
+cursor_xor=.+1
     eor #CURSORXOR
-    sta (ptr),y
+    sta (ptr1),y
+
     rts
 zendproc
 
@@ -372,10 +547,6 @@ banner:
 ; UNINITIALIZED
 
     .bss
-
-style:  .fill 1
-
-; Increase TPA bottom to here
 
 reserve_tpa_end:
 
