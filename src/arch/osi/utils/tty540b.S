@@ -99,13 +99,13 @@ zendproc
 
 ; -------------------------------------------------------------------------
 
-; TTY80 DESCRIPTION AND DISPATCHER
+; TTY DESCRIPTION AND DISPATCHER
 
 drv_tty540b:
     .word DRVID_TTY
     .word drv_tty540b_strat
     .word 0
-    .ascii "TTY80"
+    .ascii "TTY540B"
     .byte 0
 
 zproc drv_tty540b_strat
@@ -171,10 +171,10 @@ zproc init
 
 ; init display
 
+    jsr screen540b_clear
+
     lda #(ENABLE_64X32 | ENABLE_COLOR)
     sta CONTROL
-
-    jsr screen540b_clear
 
     lda #<banner
     ldx #>banner
