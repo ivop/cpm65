@@ -300,13 +300,15 @@ the same time.
     package.)
 
   - It is ridiculously fast.
-
-  - To use, unzip the `cpm65.zip` file into the root directory of the USB stick
-    or other storage card. Then enter `load "cpm65.neo"` at the prompt. CP/M-65
-    will run.
+  
+  - To use, unzip the `cpm65.zip` file into the any directory of the USB stick
+    or other storage card. Then enter `*cd your_directory_name` and then `load
+    "cpm65.neo"` at the prompt. CP/M-65 will run.
 
   - To run on the emulator, either load it as above, or boot it directly with
-    `neo cpm65.neo@8000 run@8010`.
+    `neo CPM65.NEO@8000 run@8010`. Remember that if you're running the emulator
+    on Linux, the filesystem is CASE SENSITIVE so you need to spell `CPM65.NEO`
+    using capital letters. (One CP/M-65 is running this is no longer a concern.)
 
   - This port uses an emulated BDOS, meaning that it stores its files as FAT
     files on the neo6502's USB stick. Most well-behaved CP/M-65 programs will
@@ -334,6 +336,7 @@ the same time.
   - To use, write the `nano6502.img` file into the SD-card using `dd` or your preferred SD-card image writer. If you are updating the image and want to preserve the data on all drives except `A`, write the `nano6502_sysonly.img` instead.
 
   - User area 1 on drive `A` contains utilities for setting the text and background colors, and a demo application which blinks the onboard LEDs.
+  - A SERIAL driver is available for the second UART, connected to pin 25 (RX) and 26 (TX) of the FPGA (and the UART header on the nanoComp carrier board). The baudrate is currently fixed to 115200.
 
 ### KIM-1 with K-1013 FDC notes
 
