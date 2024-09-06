@@ -224,7 +224,11 @@ bdos_filename:
 .global drvtop
 drvtop: .word drv_TTY
 
+#ifndef OSISERIAL
 defdriver TTY, DRVID_TTY, drvstrat_TTY, 0
+#else
+defdriver TTY, DRVID_TTY, drvstrat_TTY, drv_SERIAL
+#endif
 
 ; TTY driver strategy routine.
 ; Y=TTY opcode.
