@@ -13,7 +13,7 @@ SERIAL_ACIA_TDR     = $fc01
 zproc init_serial
     lda #CONTROL_RESET
     sta SERIAL_ACIA_CONTROL
-    lda #(TCB_nRTS_HIGH_IRQ_DIS << TCB_SHIFT) | (WS_8N2 << WS_SHIFT)
+    lda #(TCB_nRTS_HIGH_IRQ_DIS << TCB_SHIFT) | (WS_8N2 << WS_SHIFT) | CONTROL_DIV_16
     sta SERIAL_ACIA_CONTROL
     rts
 zendproc

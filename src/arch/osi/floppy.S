@@ -61,6 +61,10 @@ STATUS_PE_MASK   = 0x40             ; Rx Parity Error
 STATUS_IRQ_MASK  = 0x80             ; /IRQ, if pin output is low, bit is 1
                                     ; clear by read of RDR
 
+CONTROL_DIV_1  = 0
+CONTROL_DIV_16 = 1
+CONTROL_DIV_64 = 2
+
 WS_SHIFT = 2
 
 WS_7E2 = 0x00
