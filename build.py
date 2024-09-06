@@ -36,6 +36,7 @@ export(
         "osi500f.os8": "src/arch/osi+osi500f_diskimage",
         "osi600f.os8": "src/arch/osi+osi600f_diskimage",
         "osif-b.os8": "src/arch/osi+osif-b_diskimage",
+        "osiserf.os8": "src/arch/osi+osiserf_diskimage",
         "pet4032.d64": "src/arch/commodore+pet4032_diskimage",
         "pet8032.d64": "src/arch/commodore+pet8032_diskimage",
         "pet8096.d64": "src/arch/commodore+pet8096_diskimage",

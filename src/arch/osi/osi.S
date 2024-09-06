@@ -36,13 +36,16 @@ ptr1:       .fill 2
 
 mem_end:    .fill 1
 ptrkbuf:    .fill 1     ; MSB only, LSB=0
+
 save_x:     .fill 1
 save_y:     .fill 1
 
+#ifndef OSISERIAL
 curx:       .fill 1
 cury:       .fill 1
 
 key_pending:.fill 1
+#endif
 
 trkbcd:     .fill 1
 curtrk:     .fill 1
@@ -95,6 +98,8 @@ init:
 
     ldy #0
     sty ptr
+
+#ifndef OSISERIAL
     sty curx
     sty cury
 
@@ -111,6 +116,7 @@ init:
         inc ptr+1
         dex
     zuntil_eq
+#endif
 
 #if OSI500 | OSI600
     iny             ; Y=1
@@ -168,6 +174,9 @@ init:
 
     jsr init_pia
     jsr init_acia
+#if OSISERIAL
+    jsr init_serial
+#endif
     jsr initdrivers                 ; BIOS initialisation
 
     ldy #banner_end - banner
@@ -200,6 +209,9 @@ init:
 banner:                             ; reversed
     .byte 10,13
     .ascii "cifitneicS oihO eht rof 56-M/PC"
+#if OSISERIAL
+    .byte 10,13
+#endif
 banner_end:
 
 bdos_filename:
@@ -240,6 +252,10 @@ zproc drvstrat_TTY
 ;zendproc
 
 ; --- TTY DRIVER ------------------------------------------------------------
+
+#if OSISERIAL
+#include "serial.S"
+#else
 
 ; Blocks and waits for the next keypress; returns it in A.
 
@@ -428,6 +444,8 @@ zproc scroll_up
 
     rts
 zendproc
+
+#endif
 
 ; ---------------------------------------------------------------------------
 
@@ -757,7 +775,8 @@ zendproc
 
 #if OSI400
 #include "ascii.S"
-#else
+#endif
+#if OSI500 | OSI600
 #include "keyboard.S"
 #endif
 

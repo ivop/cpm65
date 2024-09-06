@@ -10,6 +10,7 @@ from config import (
     PASCAL_APPS,
 )
 
+# ----------------------------------------------------------------------------
 # 400, 500, 600 Mini-Floppy (5.25")
 
 llvmrawprogram(
@@ -142,6 +143,7 @@ img2os5(
     src=".+osimf-d_rawdiskimage",
 )
 
+# ----------------------------------------------------------------------------
 # 400, 500, 600, Floppy (8")
 
 llvmrawprogram(
@@ -255,3 +257,39 @@ img2os8(
     name="osif-b_diskimage",
     src=".+osif-b_rawdiskimage",
 )
+
+# ----------------------------------------------------------------------------
+# Serial system with 8" floppy
+
+llvmrawprogram(
+    name="osiserf_bios",
+    srcs=["./osi.S"],
+    deps=["include",
+          "src/lib+bioslib",
+          "src/arch/osi/floppy.S",
+          "src/arch/osi/serial.S"],
+    cflags=["-DOSISERIAL", "-DFLOPPY8"],
+    linkscript="./osi.ld",
+)
+
+mkcpmfs(
+    name="osiserf_rawdiskimage",
+    format="osi8",
+    bootimage=".+osiserf_bios",
+    size=128 * 1848,
+    items={
+        "0:ccp.sys@sr": "src+ccp",
+        "0:bdos.sys@sr": "src/bdos",
+    }
+    | MINIMAL_APPS
+    | BIG_APPS
+    | PASCAL_APPS
+    | MINIMAL_APPS_SRCS
+    | BIG_APPS_SRCS
+)
+
+img2os8(
+    name="osiserf_diskimage",
+    src=".+osiserf_rawdiskimage",
+)
+
