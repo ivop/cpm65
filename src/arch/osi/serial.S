@@ -41,6 +41,15 @@ zproc tty_const
 zendproc
 
 zproc tty_conout
+    cmp #127
+    zif_eq
+        lda #8
+        jsr send
+        lda #' '
+        jsr send
+        lda #8
+    zendif
+send:
     pha
     zrepeat
         lda SERIAL_ACIA_STATUS       ; wait for bit 1 set, TDR empty
