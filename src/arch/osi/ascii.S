@@ -35,10 +35,10 @@ scan_keyboard:
             sta wait_cntr
             zcontinue
         zendif
-    
+
         dec wait_cntr
         zbreakif_eq
-    
+
         ldy #$10
         zloop
             ldx #$40
