@@ -86,7 +86,7 @@ key_pressed:
     zendif
 
     lda matrix_index_tab,y
-    sta tmpval              ; store "corrected" row*7 
+    sta tmpval              ; store "corrected" row*7
 
     txa                     ; A=column
     ldy #7                  ; convert to index 0-7
