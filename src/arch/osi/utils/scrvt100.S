@@ -96,7 +96,7 @@ zproc init
     ldy #BIOS_SETZP
     jsr BIOS
 
-; init display
+; display banner
 
     lda #<banner
     ldx #>banner
@@ -137,10 +137,50 @@ zproc screen_cleartoeol
     rts
 zendproc
 
-; A = xpos [0-width), X = ypos [0-height)
-zproc screen_setcursor
+; entry: A=number [0-79], exit: Y=decades A=remainder, YA [1-80], X unaffected
+zproc _convert_to_screen_decimal
+    ldy #0
+    clc
+    adc #1
+    zloop
+        cmp #10
+        zbreakif_cc
+        sbc #10
+        iny
+    zendloop
     rts
 zendproc
+
+; A = xpos [0-width), X = ypos [0-height) --> ^[ [ ypos+1 ; xpos+1 f
+zproc screen_setcursor
+    jsr _convert_to_screen_decimal
+    ora #$30
+    sta setcursortxt+6
+    tya
+    ora #$30
+    sta setcursortxt+5
+
+    txa
+    jsr _convert_to_screen_decimal
+    ora #$30
+    sta setcursortxt+3
+    tya
+    ora #$30
+    sta setcursortxt+2
+
+    ldx #0
+    zrepeat
+        lda setcursortxt,x
+        jsr screen_putchar
+        inx
+        cpx #8
+    zuntil_eq
+    rts
+zendproc
+
+setcursortxt:
+    .byte 27
+    .ascii "[vv;hhf"
 
 ; exit: A = xpos [0-width), X = ypos [0-height]
 zproc screen_getcursor
