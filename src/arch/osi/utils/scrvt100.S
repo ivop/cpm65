@@ -17,7 +17,8 @@ ZEROPAGE
 
 drv_zp_begin:
 
-ptr:    .fill 2
+ptr:            .fill 2
+val:            .fill 1
 
 drv_zp_end:
 
@@ -172,9 +173,65 @@ zproc screen_setcursor
     rts
 zendproc
 
+; entry: A=terminator character, exit: X=value-1
+zproc _parse_decimal
+    sta 1f+1
+    lda #0
+    sta val
+    zloop
+        jsr screen_getchar
+1:
+        cmp #';'
+        zbreakif_eq
+        pha
+
+        ldy #9
+        lda val
+        clc
+        zrepeat
+            adc val
+            dey
+        zuntil_eq
+        sta val
+
+        pla
+        sec
+        sbc #$30
+        clc
+        adc val
+        sta val
+    zendloop
+    ldx val
+    dex
+    rts
+zendproc
+
 ; exit: A = xpos [0-width), X = ypos [0-height]
 zproc screen_getcursor
+    lda #<getcursor
+    ldx #>getcursor
+    jsr screen_putstring
+
+; parse result: ^[ [ vertical ; horizontal R
+
+    jsr screen_getchar
+    cmp #27
+    zif_eq
+        jsr screen_getchar
+        cmp #'['
+        zif_eq
+            lda #';'
+            jsr _parse_decimal
+            stx 2f+1
+            lda #'R'
+            jsr _parse_decimal
+            stx 1f+1
+        zendif
+    zendif
+
+1:
     lda #0
+2:
     ldx #0
     rts
 zendproc
@@ -294,6 +351,11 @@ showcursor:
 setcursor:
     .byte 27
     .ascii "[vv;hhf"
+    .byte 0
+getcursor:
+    .byte 27
+    .ascii "[6n"
+    .byte 0
 
 ; -------------------------------------------------------------------------
 
