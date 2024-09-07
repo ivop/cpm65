@@ -280,12 +280,15 @@ mkcpmfs(
     items={
         "0:ccp.sys@sr": "src+ccp",
         "0:bdos.sys@sr": "src/bdos",
+        "0:scrvt100.com": "src/arch/osi/utils+scrvt100",
     }
     | MINIMAL_APPS
     | BIG_APPS
     | PASCAL_APPS
     | MINIMAL_APPS_SRCS
     | BIG_APPS_SRCS
+    | SCREEN_APPS
+    | SCREEN_APPS_SRCS
 )
 
 img2os8(
