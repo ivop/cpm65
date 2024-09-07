@@ -214,19 +214,20 @@ zproc screen_getcursor
 
 ; parse result: ^[ [ vertical ; horizontal R
 
-    jsr screen_getchar
-    cmp #27
-    zif_eq
+    zloop
         jsr screen_getchar
-        cmp #'['
-        zif_eq
-            lda #';'
-            jsr _parse_decimal
-            stx 2f+1
-            lda #'R'
-            jsr _parse_decimal
-            stx 1f+1
-        zendif
+        cmp #27
+    zuntil_eq
+
+    jsr screen_getchar
+    cmp #'['
+    zif_eq
+        lda #';'
+        jsr _parse_decimal
+        stx 2f+1
+        lda #'R'
+        jsr _parse_decimal
+        stx 1f+1
     zendif
 
 1:
