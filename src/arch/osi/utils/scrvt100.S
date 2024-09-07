@@ -273,7 +273,9 @@ zendproc
 
 zproc screen_getchar
     ldy #BIOS_CONIN
-    jmp BIOS
+    jsr BIOS
+    clc
+    rts
 zendproc
 
 zproc screen_scrollup
