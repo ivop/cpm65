@@ -49,7 +49,7 @@ drv_screen_jump_lo:
     jmptablo screen_scrolldown
     jmptablo screen_cleartoeol
     jmptablo screen_setstyle
- 
+
 drv_screen_jump_hi:
     jmptabhi screen_version
     jmptabhi screen_getsize

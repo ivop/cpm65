@@ -19,7 +19,7 @@ scan_keyboard:
 
     zloop
         lda KEYBD
-    
+
         zif_mi
             sta last_char
             sta cur_char
@@ -27,7 +27,7 @@ scan_keyboard:
             stx wait_cntr
             rts
         zendif
-    
+
         cmp cur_char
         zif_ne
             sta cur_char
