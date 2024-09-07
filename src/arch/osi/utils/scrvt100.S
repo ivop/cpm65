@@ -119,22 +119,16 @@ zproc screen_getsize
     rts
 zendproc
 
-.macro PUT char tail:vararg
-    lda #\char
-    jsr screen_putchar
-    .ifnb \tail
-        PUT \tail
-    .endif
-.endm
-
 zproc screen_clear
-    PUT 27 '[' '2' 'J' 27 '[' 'H'
-    rts
+    lda #<clshome
+    ldx #>clshome
+    jmp screen_putstring
 zendproc
 
 zproc screen_cleartoeol
-    PUT 27 '[' 'K'
-    rts
+    lda #<cleartoeol
+    ldx #>cleartoeol
+    jmp screen_putstring
 zendproc
 
 ; entry: A=number [0-79], exit: Y=decades A=remainder, YA [1-80], X unaffected
@@ -155,22 +149,22 @@ zendproc
 zproc screen_setcursor
     jsr _convert_to_screen_decimal
     ora #$30
-    sta setcursortxt+6
+    sta setcursor+6
     tya
     ora #$30
-    sta setcursortxt+5
+    sta setcursor+5
 
     txa
     jsr _convert_to_screen_decimal
     ora #$30
-    sta setcursortxt+3
+    sta setcursor+3
     tya
     ora #$30
-    sta setcursortxt+2
+    sta setcursor+2
 
     ldx #0
     zrepeat
-        lda setcursortxt,x
+        lda setcursor,x
         jsr screen_putchar
         inx
         cpx #8
@@ -178,26 +172,24 @@ zproc screen_setcursor
     rts
 zendproc
 
-setcursortxt:
-    .byte 27
-    .ascii "[vv;hhf"
-
 ; exit: A = xpos [0-width), X = ypos [0-height]
 zproc screen_getcursor
+    lda #0
+    ldx #0
     rts
 zendproc
 
 zproc screen_setstyle
-    pha
-    PUT 27 '['
-    pla
     cmp #STYLE_REVERSE
     zif_eq
-        PUT '7' 'm'
+        lda #'7'
     zelse
-        PUT 'm'
+        lda #'0'
     zendif
-    rts
+    sta style+2
+    lda #<style
+    ldx #>style
+    jmp screen_putstring
 zendproc
 
 zproc screen_putchar
@@ -228,23 +220,27 @@ zproc screen_getchar
 zendproc
 
 zproc screen_scrollup
-    PUT 27 '[' '2' '4' ';' '1' 'f' 27 'D'
-    rts
+    lda #<scrollup
+    ldx #>scrollup
+    jmp screen_putstring
 zendproc
 
 zproc screen_scrolldown
-    PUT 27 '[' '1' ';' '1' 'f' 27 'M'
-    rts
+    lda #<scrolldown
+    ldx #>scrolldown
+    jmp screen_putstring
 zendproc
 
 zproc screen_showcursor
     cmp #0
     zif_eq
-        PUT 27 '[' '?' '2' '5' 'l'      ; le hidden (it's french)
+        lda #<hidecursor
+        ldx #>hidecursor
     zelse
-        PUT 27 '[' '?' '2' '5' 'h'      ; honestlyvisible
+        lda #<showcursor
+        ldx #>showcursor
     zendif
-    rts
+    jmp screen_putstring
 zendproc
 
 ; -------------------------------------------------------------------------
@@ -264,6 +260,40 @@ zendproc
 banner:
     .ascii "vt100 screen driver loaded."
     .byte 13, 10, 0
+
+clshome:
+    .byte 27
+    .ascii "[2J"
+    .byte 27
+    .ascii "[H"
+    .byte 0
+cleartoeol:
+    .byte 27
+    .ascii "[K"
+    .byte 0
+style:
+    .byte 27
+    .ascii "[0m"
+    .byte 0
+scrollup:
+    .byte 27
+    .ascii "[24;1f"
+    .byte 27, 'D', 0
+scrolldown:
+    .byte 27
+    .ascii "[1;1f"
+    .byte 27, 'M', 0
+hidecursor:
+    .byte 27
+    .ascii "[?25l"                  ; le hidden (it's french)
+    .byte 0
+showcursor:
+    .byte 27
+    .ascii "[?25h"                  ; honestlyvisible
+    .byte 0
+setcursor:
+    .byte 27
+    .ascii "[vv;hhf"
 
 ; -------------------------------------------------------------------------
 
