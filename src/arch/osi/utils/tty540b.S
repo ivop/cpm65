@@ -326,7 +326,9 @@ zendproc
 
 ; We don't have timers on the OSI, just block for now
 zproc screen540b_getchar
-    jmp tty540b_conin
+    jsr tty540b_conin
+    clc
+    rts
 zendproc
 
 zproc screen540b_scrollup
