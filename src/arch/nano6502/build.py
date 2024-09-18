@@ -7,6 +7,7 @@ from config import (
     BIG_APPS,
     BIG_APPS_SRCS,
     SCREEN_APPS,
+    BIG_SCREEN_APPS,
     PASCAL_APPS,
 )
 
@@ -25,12 +26,14 @@ mkcpmfs(
         "1:colorfg.com": "src/arch/nano6502/utils+colorfg",
         "1:colorbg.com": "src/arch/nano6502/utils+colorbg",
         "1:ledtest.com": "src/arch/nano6502/utils+ledtest",
+	"1:baudrate.com": "src/arch/nano6502/utils+baudrate",
     }
     | MINIMAL_APPS
     | MINIMAL_APPS_SRCS
     | BIG_APPS
     | BIG_APPS_SRCS
     | SCREEN_APPS
+    | BIG_SCREEN_APPS
     | PASCAL_APPS,
 )
 

@@ -221,7 +221,8 @@ the same time.
     it. The disk image has been munged according to ProDOS sector ordering.
 
   - It supports a single drive on slot 6 drive 1. You need a 80-column card
-    (but not any aux memory).
+    (but not any aux memory). The console is a standard 80x24, and there is
+    a SCREEN driver.
 
   - This port runs completely bare-metal and does not use any ROM routines.
 
@@ -335,8 +336,8 @@ the same time.
 
   - To use, write the `nano6502.img` file into the SD-card using `dd` or your preferred SD-card image writer. If you are updating the image and want to preserve the data on all drives except `A`, write the `nano6502_sysonly.img` instead.
 
-  - User area 1 on drive `A` contains utilities for setting the text and background colors, and a demo application which blinks the onboard LEDs.
-  - A SERIAL driver is available for the second UART, connected to pin 25 (RX) and 26 (TX) of the FPGA (and the UART header on the nanoComp carrier board). The baudrate is currently fixed to 115200.
+  - User area 1 on drive `A` contains utilities for setting the text and background colors, setting the baudrate on on the second UART and a demo application which blinks the onboard LEDs.
+  - A SERIAL driver is available for the second UART, connected to pin 25 (RX) and 26 (TX) of the FPGA (and the UART header on the nanoComp carrier board). The baudrate defaults to 9600 baud but can be configured by the utility in user area 1.
 
 ### KIM-1 with K-1013 FDC notes
 
