@@ -132,7 +132,8 @@ zendproc
 zproc serial_open
     lda #CONTROL_RESET
     sta SERIAL_ACIA_CONTROL
-    lda #(TCB_nRTS_HIGH_IRQ_DIS << TCB_SHIFT) | (WS_8N2 << WS_SHIFT) | CONTROL_DIV_16
+    ; div1 --> 4800 baud default, up to 19200 with faster base clock
+    lda #(TCB_nRTS_HIGH_IRQ_DIS << TCB_SHIFT) | (WS_8N2 << WS_SHIFT)
     sta SERIAL_ACIA_CONTROL
     rts
 zendproc
