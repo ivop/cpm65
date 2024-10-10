@@ -713,7 +713,7 @@ zproc bios_READ
         rts
     zendif
 
-    jsr calculate_trkbuf_sector_location    ; set Y to zero
+    jsr calculate_trkbuf_sector_location    ; and set Y to zero
 
     zloop                       ; copy sector from trkbuf to (dma)
         lda (ptr),y
@@ -732,7 +732,7 @@ zproc bios_WRITE
         rts
     zendif
 
-    jsr calculate_trkbuf_sector_location
+    jsr calculate_trkbuf_sector_location    ; and set Y to zero
 
     zloop                       ; copy sector from (dma) to trkbuf
         lda (dma),y
