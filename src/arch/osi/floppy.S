@@ -118,7 +118,7 @@ zendproc
 ; ----------------------------------------------------------------------------
 
 zproc wait_past_index_hole
-    zloop                   ; not above hole, might be a no-op if index is 
+    zloop                   ; not above hole, might be a no-op if index is
         lda PORTA           ; already triggered
     zuntil_pl
     zloop                   ; above hole

@@ -299,4 +299,3 @@ img2os8(
     name="osiserf_diskimage",
     src=".+osiserf_rawdiskimage",
 )
-
